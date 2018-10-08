@@ -1,0 +1,21 @@
+{
+  "name": "socket-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dayjs": "^1.7.7",
+    "socket.io": "^2.1.1"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xenexio/socket-server.git"
+  },
+  "description": ""
+}

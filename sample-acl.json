@@ -1,0 +1,19 @@
+{
+  "users": {
+    "user1": {
+      "pass": "pass1",
+      "roles": ["pub"]
+    },
+    "user2": {
+      "pass": "pass2",
+      "roles": ["sub"]
+    }
+  },
+  "topics": [
+    {
+      "prefix": "topic1",
+      "publishers": ["pub"],
+      "subscribers": ["sub"]
+    }
+  ]
+}
