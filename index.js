@@ -17,6 +17,7 @@ loadAcl()
 
 io.on('connection', function (socket) {
   console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), 'CONNECTED, client=', socket.id)
+  
   socket.on('signin', (auth) => {
     let user = acl.users[auth.user]
     if (user && user.pass === auth.pass) {
@@ -25,28 +26,24 @@ io.on('connection', function (socket) {
       console.log('INVALID USER/PASS')
     }
   })
+  
   socket.on('subscribe', (topic) => {
     console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), 'SUBSCRIBE, client=', socket.id, ', topic=', topic)
     if (!topic) {
-      return
+      return console.log('NO_TOPIC')
+    }
+    
+    if (!socket.user) {
+      return console.log('NOT_SIGNIN')
     }
 
-    try {
-      Object.keys(acl.topics).forEach((i) => {
-        if ( topic.indexOf(acl.topics[i].prefix) === 0) {
-          if (!socket.user) {
-            throw 'NOT_AUTHORIZED'
-          }
-          let roles = acl.users[socket.user].roles
-          if (!checkAcl(roles, acl.topics[i].subscribers)) {
-            throw 'NOT_AUTHORIZED2'
-          }
-        }
-      })
-      socket.join(topic)
-    } catch (e) {
-      console.log('error', e)
+    let ok = acl.topics.some(aTopic => topic.substr(0, aTopic.prefix.length) === aTopic.prefix &&
+      isRoleInList(acl.users[socket.user].roles, aTopic.subscribers)
+    )
+    if (!ok) {
+      return console.log('NOT_AUTHORIZED')
     }
+    socket.join(topic)
   })
 
   socket.on('unsubscribe', (topic) => {
@@ -62,22 +59,14 @@ io.on('connection', function (socket) {
       console.log(dayjs().format('YYYY-MM-DD HH:mm:ss'), 'ERROR=RESERVED_TOPIC')
       return
     }
-    try {
-      Object.keys(acl.topics).forEach((i) => {
-        if ( topic.indexOf(acl.topics[i].prefix) === 0) {
-          if (!socket.user) {
-            throw 'NOT_AUTHORIZED'
-          }
-          let roles = acl.users[socket.user].roles
-          if (!checkAcl(roles, acl.topics[i].publishers)) {
-            throw 'NOT_AUTHORIZED2'
-          }
-        }
-      })
-      io.sockets.in(topic).emit(topic, data)
-    } catch (e) {
-      console.log('error', e)
+    if (!socket.user) {
+      return console.log('NOT_SIGNIN')
     }
+
+    let ok = acl.topics.some(aTopic => topic.substr(0, aTopic.prefix.length) === aTopic.prefix &&
+      isRoleInList(acl.users[socket.user].roles, aTopic.publishers)
+    )
+    io.sockets.in(topic).emit(topic, data)
     // broadcast to all members in room/topic INCLUDE yourself
     // broadcast to all members in room/topic EXCEPT yourself
     // socket.to(topic).emit(topic, data)
@@ -98,14 +87,6 @@ function loadAcl() {
   }
 }
 
-function checkAcl(roles, lists) {
-  let found = false
-  console.log('roles=', roles, lists)
-  for (let i = 0; i < roles.length; i++) {
-    if (lists.indexOf(roles[i]) >= 0) {
-      found = true
-      break
-    }
-  }
-  return found
+function isRoleInList(roles, lists) {
+  return roles.some(role => lists.indexOf(role) >= 0)
 }
