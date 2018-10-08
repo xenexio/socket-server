@@ -66,6 +66,9 @@ io.on('connection', function (socket) {
     let ok = acl.topics.some(aTopic => topic.substr(0, aTopic.prefix.length) === aTopic.prefix &&
       isRoleInList(acl.users[socket.user].roles, aTopic.publishers)
     )
+    if (!ok) {
+      return console.log('NOT_AUTHORIZED')
+    }
     io.sockets.in(topic).emit(topic, data)
     // broadcast to all members in room/topic INCLUDE yourself
     // broadcast to all members in room/topic EXCEPT yourself
